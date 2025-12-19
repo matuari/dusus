@@ -7,10 +7,14 @@ RUN curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/d
     rm /tmp/xray.zip && \
     chmod +x /usr/bin/xray
 
+RUN adduser -D -u 10014 choreo_user
+
 COPY config.json /etc/xray/config.json
 
-RUN chmod -R 777 /etc/xray
+RUN chown -R 10014:10014 /etc/xray && \
+    chmod -R 777 /etc/xray
 
+USER 10014
 WORKDIR /etc/xray
 
 EXPOSE 8080
