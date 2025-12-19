@@ -42,7 +42,7 @@
         "network": "ws",
         "security": "none",
         "wsSettings": {
-          "path": "/default/dusus/v1.0"
+          "path": "/ws"
         }
       },
       "sniffing": {
