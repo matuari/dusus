@@ -2,32 +2,74 @@
   "log": {
     "loglevel": "warning"
   },
+  "dns": {
+    "servers": [
+      "https://1.1.1.1/dns-query",
+      "https://8.8.8.8/dns-query"
+    ],
+    "queryStrategy": "UseIPv4"
+  },
+  "routing": {
+    "domainStrategy": "UseIPv4",
+    "rules": [
+      {
+        "type": "field",
+        "ip": [ "::/0" ],
+        "outboundTag": "block"
+      }
+    ]
+  },
   "inbounds": [
     {
       "port": 8080,
+      "listen": "0.0.0.0",
       "protocol": "vless",
       "settings": {
         "clients": [
           {
-            "id": "c59dc147-0f50-4111-9886-ae014641c1e8",
+            "id": "UUID_PLACEHOLDER",
             "level": 0
           }
         ],
         "decryption": "none",
-        "fallbacks": []
+        "fallbacks": [
+          {
+            "dest": 3000
+          }
+        ]
       },
       "streamSettings": {
         "network": "ws",
         "security": "none",
         "wsSettings": {
-          "path": "/vless"
+          "path": "/ws"
         }
+      },
+      "sniffing": {
+        "enabled": false
+      }
+    },
+    {
+      "port": 3000,
+      "listen": "127.0.0.1",
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "www.google.com",
+        "port": 80,
+        "network": "tcp"
       }
     }
   ],
   "outbounds": [
     {
-      "protocol": "freedom"
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv4"
+      }
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
     }
   ]
 }
