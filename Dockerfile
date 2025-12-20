@@ -14,7 +14,9 @@ COPY entrypoint.sh /entrypoint.sh
 
 RUN chown -R 10014:10014 /etc/xray && \
     chmod -R 777 /etc/xray && \
-    chmod +x /entrypoint.sh
+    chmod +x /entrypoint.sh && \
+    chown 10014:10014 /tmp && \
+    chmod 1777 /tmp
 
 USER 10014
 WORKDIR /etc/xray
