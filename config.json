@@ -32,21 +32,18 @@
           }
         ],
         "decryption": "none",
-        "fallbacks": [
-          {
-            "dest": 3000
-          }
-        ]
+        "fallbacks": []
       },
       "streamSettings": {
-        "network": "ws",
+        "network": "grpc",
         "security": "none",
-        "wsSettings": {
-          "path": "/ws"
+        "grpcSettings": {
+          "serviceName": "grpc"
         }
       },
       "sniffing": {
-        "enabled": false
+        "enabled": true,
+        "destOverride": ["http", "tls"]
       }
     },
     {
