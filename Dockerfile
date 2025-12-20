@@ -18,4 +18,4 @@ WORKDIR /etc/xray
 
 EXPOSE 8080
 
-CMD sed "s/UUID_PLACEHOLDER/$uuid/g" /etc/xray/config.json > /tmp/config.json && /usr/bin/xray -config /tmp/config.json
+CMD sed "s/UUID_PLACEHOLDER/${UUID:-${uuid}}/g" /etc/xray/config.json > /tmp/config.json && /usr/bin/xray -config /tmp/config.json
