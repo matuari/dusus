@@ -1,6 +1,6 @@
 {
   "log": {
-    "loglevel": "debug"
+    "loglevel": "warning"
   },
   "dns": {
     "servers": [
@@ -8,16 +8,6 @@
       "https://8.8.8.8/dns-query"
     ],
     "queryStrategy": "UseIPv4"
-  },
-  "routing": {
-    "domainStrategy": "UseIPv4",
-    "rules": [
-      {
-        "type": "field",
-        "ip": [ "::/0" ],
-        "outboundTag": "block"
-      }
-    ]
   },
   "inbounds": [
     {
@@ -35,11 +25,38 @@
         "fallbacks": []
       },
       "streamSettings": {
-        "network": "xhttp",
+        "network": "tcp",
         "security": "none",
-        "xhttpSettings": {
-          "path": "/xhttp",
-          "mode": "auto"
+        "tcpSettings": {
+          "header": {
+            "type": "http",
+            "request": {
+              "version": "1.1",
+              "method": "GET",
+              "path": ["/"],
+              "headers": {
+                "Host": ["www.google.com", "www.bing.com"],
+                "User-Agent": [
+                  "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.75 Safari/537.36",
+                  "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/14A456 Safari/602.1"
+                ],
+                "Accept-Encoding": ["gzip, deflate"],
+                "Connection": ["keep-alive"],
+                "Pragma": "no-cache"
+              }
+            },
+            "response": {
+              "version": "1.1",
+              "status": "200",
+              "reason": "OK",
+              "headers": {
+                "Content-Type": ["application/octet-stream", "application/x-www-form-urlencoded"],
+                "Transfer-Encoding": ["chunked"],
+                "Connection": ["keep-alive"],
+                "Pragma": "no-cache"
+              }
+            }
+          }
         }
       },
       "sniffing": {
