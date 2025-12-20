@@ -1,25 +1,29 @@
+# syntax=docker/dockerfile:1
 FROM alpine:latest
 
-RUN apk add --no-cache curl unzip ca-certificates
+# Утилиты: jq для безопасной правки JSON, curl/unzip для xray
+RUN apk add --no-cache jq curl unzip ca-certificates
 
+# Скачиваем xray
 RUN curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip && \
     unzip /tmp/xray.zip -d /usr/bin/ && \
     rm /tmp/xray.zip && \
     chmod +x /usr/bin/xray
 
+# Создаём непривилегированного пользователя
 RUN adduser -D -u 10014 choreo_user
 
+# Копируем неизменяемый config.json и entrypoint
 COPY config.json /etc/xray/config.json
+COPY entrypoint.sh /entrypoint.sh
 
+RUN chmod +x /entrypoint.sh
 RUN chmod -R 755 /etc/xray
 
+# Переключаемся на непривилегированного пользователя
 USER 10014
 WORKDIR /etc/xray
 
 EXPOSE 8080
 
-CMD \
-  echo "UUID: ${UUID:-not set}" && \
-  echo "uuid: ${uuid:-not set}" && \
-  sed "s/UUID_PLACEHOLDER/$UUID/g" /etc/xray/config.json > /tmp/config.json && \
-  exec /usr/bin/xray -config /tmp/config.json
+ENTRYPOINT ["/entrypoint.sh"]
