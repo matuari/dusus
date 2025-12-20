@@ -10,17 +10,12 @@ RUN curl -L -o /tmp/xray.zip https://github.com/XTLS/Xray-core/releases/latest/d
 RUN adduser -D -u 10014 choreo_user
 
 COPY config.json /etc/xray/config.json
-COPY entrypoint.sh /entrypoint.sh
 
-RUN chown -R 10014:10014 /etc/xray && \
-    chmod -R 777 /etc/xray && \
-    chmod +x /entrypoint.sh && \
-    chown 10014:10014 /tmp && \
-    chmod 1777 /tmp
+RUN chmod -R 755 /etc/xray
 
 USER 10014
 WORKDIR /etc/xray
 
 EXPOSE 8080
 
-ENTRYPOINT ["/entrypoint.sh"]
+CMD sed "s/UUID_PLACEHOLDER/$UUID/g" /etc/xray/config.json > /tmp/config.json && /usr/bin/xray -config /tmp/config.json
