@@ -1,46 +1,48 @@
 #!/bin/sh
 set -eu
 
-# WARNING: вывод секретов в логах небезопасен. Удалите echo перед деплоем в production.
+# Проверка формата UUID 8-4-4-4-12 hex (строчные/прописные буквы допускаются)
+is_valid_uuid() {
+  echo "$1" | grep -Eiq '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+}
 
-# Показать значение переменной для проверки
-echo "Runtime check: UUID=${UUID:-not set}"
+# Таймаут ожидания переменной от платформы (в секундах)
+WAIT_SECONDS=${WAIT_FOR_UUID_SECONDS:-15}
+SLEEP_INTERVAL=1
+elapsed=0
 
-# Обязательная проверка: если UUID не задан — прекращаем запуск
+# Ждём, если переменная ещё не инжектирована
+if [ -n "${UUID:-}" ]; then
+  echo "UUID environment variable already set."
+else
+  echo "UUID not set, waiting up to ${WAIT_SECONDS}s for platform to inject it..."
+  while [ $elapsed -lt $WAIT_SECONDS ]; do
+    if [ -n "${UUID:-}" ]; then
+      echo "UUID received after ${elapsed}s."
+      break
+    fi
+    sleep $SLEEP_INTERVAL
+    elapsed=$((elapsed + SLEEP_INTERVAL))
+  done
+fi
+
+# Если не пришла — выходим с ошибкой
 if [ -z "${UUID:-}" ]; then
-  echo "ERROR: UUID is not set. Aborting startup."
+  echo "ERROR: UUID environment variable is not set after waiting ${WAIT_SECONDS}s." >&2
+  echo "Container will exit." >&2
   exit 1
 fi
 
-# Проверяем наличие исходного конфига
-if [ ! -f /etc/xray/config.json ]; then
-  echo "ERROR: /etc/xray/config.json not found"
-  exit 1
+# Валидация формата UUID
+if ! is_valid_uuid "$UUID"; then
+  echo "ERROR: UUID value '$UUID' is not a valid UUID (expected 8-4-4-4-12 hex)." >&2
+  exit 2
 fi
 
-# Создаём временный конфиг, заменяя все вхождения строки UUID_PLACEHOLDER на значение переменной
-# Используем jq с рекурсивной функцией walk для безопасной замены в любом месте JSON
-jq --arg uuid "$UUID" '
-  def walk(f):
-    . as $in
-    | if type == "object" then
-        reduce keys[] as $k ({}; . + { ($k): ($in[$k] | walk(f)) }) | f
-      elif type == "array" then
-        map( . | walk(f) ) | f
-      else
-        f
-      end;
-  def replace_uuid:
-    if type == "string" and . == "UUID_PLACEHOLDER" then $uuid else . end;
-  walk(replace_uuid)
-' /etc/xray/config.json > /tmp/config.json
+echo "UUID: $UUID"
 
-# Проверка: вывести поле id из сгенерированного конфига (покажет, что подстановка прошла)
-echo "Config snippet (id field):"
-jq -r '
-  # пытаемся найти первое вхождение clients[].id
-  (.inbounds[]?.settings?.clients[]?.id) // empty
-' /tmp/config.json | head -n 1 || true
+# Подстановка UUID в конфиг (не перезаписываем исходный /etc/xray/config.json)
+sed "s/UUID_PLACEHOLDER/$UUID/g" /etc/xray/config.json > /tmp/config.json
 
-# Запускаем xray как PID 1
+# Запускаем xray (exec чтобы процесс стал PID 1)
 exec /usr/bin/xray -config /tmp/config.json
