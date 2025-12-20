@@ -35,10 +35,11 @@
         "fallbacks": []
       },
       "streamSettings": {
-        "network": "grpc",
+        "network": "xhttp",
         "security": "none",
-        "grpcSettings": {
-          "serviceName": "grpc"
+        "xhttpSettings": {
+          "path": "/xhttp",
+          "mode": "auto"
         }
       },
       "sniffing": {
