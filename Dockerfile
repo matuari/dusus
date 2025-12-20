@@ -11,12 +11,11 @@ RUN adduser -D -u 10014 choreo_user
 
 COPY config.json /etc/xray/config.json
 
-RUN chown -R 10014:10014 /etc/xray && \
-    chmod -R 777 /etc/xray
-
 USER 10014
-WORKDIR /etc/xray
+WORKDIR /tmp
 
 EXPOSE 8080
 
-CMD sed -i "s/UUID_PLACEHOLDER/$UUID/g" /etc/xray/config.json && /usr/bin/xray -config /etc/xray/config.json
+CMD cp /etc/xray/config.json /tmp/config.json && \
+    sed -i "s/UUID_PLACEHOLDER/${UUID}/g" /tmp/config.json && \
+    /usr/bin/xray -config /tmp/config.json
